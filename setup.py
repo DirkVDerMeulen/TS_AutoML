@@ -12,7 +12,7 @@ URL = 'https://github.com/DirkVDerMeulen/TS_AutoML'
 EMAIL = 'dirk-vandermeulen@hotmail.com'
 AUTHOR = 'Dirk van der Meulen'
 REQUIRES_PYTHON = '>=3.6.0'
-VERSION = '0.0.2'
+VERSION = None
 
 # Necessary requirements for package
 REQUIRED = [
@@ -34,7 +34,7 @@ else:
 # Where the magic happens
 setup(
     name=NAME,
-    version=VERSION,
+    version=about['__version__'],
     description=DESCRIPTION,
     url=URL,
     author=AUTHOR,
