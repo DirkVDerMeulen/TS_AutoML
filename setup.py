@@ -9,7 +9,7 @@ URL = 'https://github.com/DirkVDerMeulen/TS_AutoML'
 EMAIL = 'dirk-vandermeulen@hotmail.com'
 AUTHOR = 'Dirk van der Meulen'
 REQUIRES_PYTHON = '>=3.6.0'
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 
 # Where the magic happens
 setup(
