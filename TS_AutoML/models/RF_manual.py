@@ -5,6 +5,8 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_log_error
 
 
+# TODO: replace separate rolling logic and regressor logic
+
 class TimeSeriesPredictor(RandomForestRegressor):
 
     def __init__(self, df, predictor=RandomForestRegressor, **config):

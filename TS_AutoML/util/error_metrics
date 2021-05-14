@@ -1,0 +1,12 @@
+import numpy as np
+from sklearn.metrics import mean_squared_log_error
+
+
+def rmsle(ytrue, ypred):
+    # Root mean squared log error
+    return np.sqrt(mean_squared_log_error(ytrue, ypred))
+
+
+def mse():
+    # mean squared error
+    pass
