@@ -4,7 +4,7 @@
 import io
 import os
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 NAME = 'TS_AutoML'
 DESCRIPTION = 'Automated Machine Learning implementation for Time Series Prediction problems.'
@@ -40,7 +40,7 @@ setup(
     author=AUTHOR,
     author_email=EMAIL,
     license='unlicense',
-    packages=['TS_AutoML'],
+    packages=find_packages(),
     install_requires=REQUIRED,
     include_package_data=True,
     zip_safe=False
