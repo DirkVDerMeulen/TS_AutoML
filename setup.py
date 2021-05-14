@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import io
 import os
-
 from setuptools import setup, find_packages
 
 NAME = 'TS_AutoML'
