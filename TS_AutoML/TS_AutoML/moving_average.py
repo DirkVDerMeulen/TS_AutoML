@@ -36,6 +36,7 @@ class MovingAverageForecast:
         for SKUID, group in combinations:
             tmp_df = self.df[(self.df.SKUID == SKUID) & (self.df.ForecastGroupID == group)].copy()  # DF for combination
 
+            # TODO: adjust to match rolling prediction periods determination
             if self.start_date:
                 tmp_df = tmp_df[tmp_df[self.time_column] >= self.start_date - self.lag - self.window + 1]
             if self.end_date:
@@ -59,8 +60,8 @@ class MovingAverageForecast:
             del values, windows, moving_averages, tmp_df
 
         result = pd.concat(results)
-        # error = self.rmse(result[self.target], result[f'MA_{self.window}_lag_{self.lag}'])
-        return result
+        error = self.rmse(result[self.target], result[f'MA_{self.window}_lag_{self.lag}'])
+        return result, error
 
     def rmse(self, y_true, y_pred):
         return np.sqrt(mean_squared_error(y_true, y_pred))

@@ -51,17 +51,18 @@ class RollingForecast:
 
             # Add predictions and actuals to input Data
             X_test['prediction'], X_test['actual'] = list(out), list(y_test)
+            X_test['prediction_error'] = X_test['prediction'] - X_test['actual']
             self.results.append(X_test)
 
             error = self.rmse(y_test, out)
             print('Week %d - Error %.5f' % (date, error))
-            self.error.append(error)
-        print('Mean Error = %.5f' % np.mean(self.error))
 
         results = pd.concat(self.results)
-        return results
+        error = self.rmse(results['actual'], results['prediction'])
+        return results, error
 
     def get_prediction_dates(self):
+        # TODO: adjust to match MA prediction periods determination
         return self.all_data[self.time_col].sort_values(ascending=True).unique()[-self.periods:]
 
     def train_regressor(self, X_train, y_train):
