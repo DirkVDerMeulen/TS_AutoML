@@ -17,7 +17,7 @@ class RollingForecast:
                  groupby: List,
                  time_col: AnyStr,
                  target_value: AnyStr,
-                 test_window: int,
+                 periods: int,
                  retrain_frequency: int = 1,
                  **model_params):
         self.predictor = predictor
@@ -25,7 +25,7 @@ class RollingForecast:
         self.groupby = groupby
         self.time_col = time_col
         self.target_val = target_value
-        self.test_window = test_window
+        self.periods = periods
         self.frequency = retrain_frequency
         self.model_params = model_params
         self.results = []
@@ -62,7 +62,7 @@ class RollingForecast:
         return results
 
     def get_prediction_dates(self):
-        return self.all_data[self.time_col].sort_values(ascending=True).unique()[-self.test_window:]
+        return self.all_data[self.time_col].sort_values(ascending=True).unique()[-self.periods:]
 
     def train_regressor(self, X_train, y_train):
         return self.predictor(X_train, y_train, **self.model_params).train()

@@ -15,13 +15,17 @@ class MovingAverageForecast:
                  time_col: AnyStr,
                  target_series_column: AnyStr,
                  window: int,
-                 lag: int):
+                 lag: int,
+                 prediction_start_date: int = 0,
+                 prediction_end_date: int = 0):
         self.df = input_df
         self.groupby = partitioning_columns
         self.time_column = time_col
         self.target = target_series_column
         self.window = window
         self.lag = lag
+        self.start_date = prediction_start_date
+        self.end_date = prediction_end_date
 
     def predict(self):
         # get all unique combinations for SKU and FcstGroup
@@ -31,6 +35,11 @@ class MovingAverageForecast:
         results = []
         for SKUID, group in combinations:
             tmp_df = self.df[(self.df.SKUID == SKUID) & (self.df.ForecastGroupID == group)].copy()  # DF for combination
+
+            if self.start_date:
+                tmp_df = tmp_df[tmp_df[self.time_column] >= self.start_date - self.lag - self.window + 1]
+            if self.end_date:
+                tmp_df = tmp_df[tmp_df[self.time_column] <= self.end_date]
 
             # Sort values and reset index
             tmp_df.sort_values(by=self.time_column, ascending=True)
@@ -45,6 +54,7 @@ class MovingAverageForecast:
             tmp_df[f'MA_{self.window}_lag_{self.lag}'] = list(moving_averages)
             tmp_df['prediction_error'] = tmp_df[f'MA_{self.window}_lag_{self.lag}'] - tmp_df[self.target]
 
+            tmp_df.dropna(axis=0, inplace=True)
             results.append(tmp_df)
             del values, windows, moving_averages, tmp_df
 
