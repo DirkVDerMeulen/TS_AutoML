@@ -13,7 +13,6 @@ from typing import (
 class RollingForecast:
     def __init__(self,
                  predictor: Callable,
-                 error_metric: Callable,
                  df: pd.DataFrame,
                  groupby: List,
                  time_col: AnyStr,
@@ -22,7 +21,6 @@ class RollingForecast:
                  retrain_frequency: int = 1,
                  **model_params):
         self.predictor = predictor
-        self.error_metric = error_metric
         self.all_data = df
         self.groupby = groupby
         self.time_col = time_col
