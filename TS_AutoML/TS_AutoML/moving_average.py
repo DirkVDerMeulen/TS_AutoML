@@ -8,6 +8,7 @@ from typing import (
     AnyStr
 )
 
+
 class MovingAverageForecast:
 
     def __init__(self, input_df,
