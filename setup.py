@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import io
 import os
-
-from setuptools import setup
+from setuptools import setup, find_packages
 
 NAME = 'TS_AutoML'
 DESCRIPTION = 'Automated Machine Learning implementation for Time Series Prediction problems.'
@@ -12,7 +10,7 @@ URL = 'https://github.com/DirkVDerMeulen/TS_AutoML'
 EMAIL = 'dirk-vandermeulen@hotmail.com'
 AUTHOR = 'Dirk van der Meulen'
 REQUIRES_PYTHON = '>=3.6.0'
-VERSION = '0.0.2'
+VERSION = None
 
 # Necessary requirements for package
 REQUIRED = [
@@ -34,13 +32,13 @@ else:
 # Where the magic happens
 setup(
     name=NAME,
-    version=VERSION,
+    version=about['__version__'],
     description=DESCRIPTION,
     url=URL,
     author=AUTHOR,
     author_email=EMAIL,
     license='unlicense',
-    packages=['TS_AutoML'],
+    packages=find_packages(),
     install_requires=REQUIRED,
     include_package_data=True,
     zip_safe=False
