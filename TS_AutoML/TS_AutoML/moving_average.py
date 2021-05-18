@@ -1,16 +1,29 @@
 import pandas as pd
+import numpy as np
 
+from sklearn.metrics import mean_squared_error
+
+from typing import (
+    List,
+    AnyStr
+)
 
 class MovingAverageForecast:
 
-    def __init__(self, input_df, **config):
+    def __init__(self, input_df,
+                 partitioning_columns: List,
+                 time_col: AnyStr,
+                 target_series_column: AnyStr,
+                 window: int,
+                 lag: int):
         self.df = input_df
-        self.window = config['window']
-        self.lag = config['lag']
-        self.groupby = config['partitioning_columns']
-        self.time_column = config['time_column']
+        self.groupby = partitioning_columns
+        self.time_column = time_col
+        self.target = target_series_column
+        self.window = window
+        self.lag = lag
 
-    def forecast(self):
+    def predict(self):
         # get all unique combinations for SKU and FcstGroup
         combinations = list(set(self.df[self.groupby].itertuples(index=False, name=None)))
 
@@ -24,15 +37,20 @@ class MovingAverageForecast:
             tmp_df.reset_index(drop=True, inplace=True)
 
             # Create series of target value column
-            values = tmp_df['HL_sum']
+            values = tmp_df[self.target]
             windows = values.rolling(self.window + self.lag).sum() - values.rolling(self.lag).sum()
             moving_averages = windows / self.window
 
             # Add to tmp_df
             tmp_df[f'MA_{self.window}_lag_{self.lag}'] = list(moving_averages)
+            tmp_df['prediction_error'] = tmp_df[f'MA_{self.window}_lag_{self.lag}'] - tmp_df[self.target]
 
             results.append(tmp_df)
             del values, windows, moving_averages, tmp_df
 
         result = pd.concat(results)
+        # error = self.rmse(result[self.target], result[f'MA_{self.window}_lag_{self.lag}'])
         return result
+
+    def rmse(self, y_true, y_pred):
+        return np.sqrt(mean_squared_error(y_true, y_pred))
