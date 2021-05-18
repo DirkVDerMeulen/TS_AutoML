@@ -1,4 +1,7 @@
 import pandas as pd
+import numpy as np
+
+from sklearn.metrics import mean_squared_error
 
 from typing import (
     Callable,
@@ -7,9 +10,10 @@ from typing import (
 )
 
 
-class RollingForecast():
+class RollingForecast:
     def __init__(self,
                  predictor: Callable,
+                 error_metric: Callable,
                  df: pd.DataFrame,
                  groupby: List,
                  time_col: AnyStr,
@@ -18,6 +22,7 @@ class RollingForecast():
                  retrain_frequency: int = 1,
                  **model_params):
         self.predictor = predictor
+        self.error_metric = error_metric
         self.all_data = df
         self.groupby = groupby
         self.time_col = time_col
@@ -50,7 +55,10 @@ class RollingForecast():
             X_test['prediction'], X_test['actual'] = list(out), list(y_test)
             self.results.append(X_test)
 
-            # TODO: add error calculation
+            error = self.rmse(y_test, out)
+            print('Week %d - Error %.5f' % (date, error))
+            self.error.append(error)
+        print('Mean Error = %.5f' % np.mean(self.error))
 
         results = pd.concat(self.results)
         return results
@@ -60,3 +68,6 @@ class RollingForecast():
 
     def train_regressor(self, X_train, y_train):
         return self.predictor(X_train, y_train, **self.model_params).train()
+
+    def rmse(self, y_true, y_pred):
+        return np.sqrt(mean_squared_error(y_true, y_pred))
