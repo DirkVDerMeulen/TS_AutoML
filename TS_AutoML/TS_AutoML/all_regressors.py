@@ -1,28 +1,36 @@
+import pandas as pd
+
 from sklearn.ensemble import RandomForestRegressor
 from TS_AutoML.functions import ParameterSearch
+
+from typing import (
+    AnyStr
+)
 
 # TODO add type hinting
 
 
 class RandomForest:
-    # TODO: Add all RF parameters with default values
-    def __init__(self, x_train=None, y_train=None, **config):
+    def __init__(self,
+                 x_train: pd.DataFrame,
+                 y_train: pd.Series,
+                 n_estimators: int = 100,
+                 max_depth: int = None,
+                 criterion: AnyStr = "mse",
+                 min_samples_split: int = 2
+                 ):
         self.x = x_train
         self.y = y_train
-        self.n_estimators = config.get('n_estimators', 1000)
-        self.n_jobs = config.get('n_jobs', -1)
-        self.random_state = config.get('random_state', 0)
+        self.n_estimators = n_estimators
+        self.max_depth = max_depth
+        self.criterion = criterion
+        self.min_samples_split = min_samples_split
 
     def train(self):
         regr = RandomForestRegressor(n_estimators=self.n_estimators,
-                                     n_jobs=self.n_jobs,
-                                     random_state=self.random_state)
-        # regr = RandomForestRegressor(bootstrap=True,
-        #                              max_depth=100,
-        #                              max_features=25,
-        #                              min_samples_leaf=5,
-        #                              min_samples_split=12,
-        #                              n_estimators=100)
+                                     max_depth=self.max_depth,
+                                     criterion=self.criterion,
+                                     min_samples_split=self.min_samples_split)
         return regr.fit(self.x, self.y)
 
     @staticmethod
