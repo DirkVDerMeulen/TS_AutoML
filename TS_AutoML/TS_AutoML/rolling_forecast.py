@@ -17,15 +17,17 @@ class RollingForecast:
                  groupby: List,
                  time_col: AnyStr,
                  target_value: AnyStr,
-                 periods: int,
                  retrain_frequency: int = 1,
+                 prediction_start_date: int = 0,
+                 prediction_end_date: int = 0,
                  **model_params):
         self.predictor = predictor
         self.all_data = df
         self.groupby = groupby
         self.time_col = time_col
+        self.start_date = prediction_start_date
+        self.end_date = prediction_end_date
         self.target_val = target_value
-        self.periods = periods
         self.frequency = retrain_frequency
         self.model_params = model_params
         self.results = []
@@ -62,8 +64,13 @@ class RollingForecast:
         return results, error
 
     def get_prediction_dates(self):
-        # TODO: adjust to match MA prediction periods determination
-        return self.all_data[self.time_col].sort_values(ascending=True).unique()[-self.periods:]
+        # Determine array of dates for which rolling forecast must be done
+        prediction_dates = self.all_data[self.time_col].sort_values(ascending=True).unique()
+        if self.start_date:
+            prediction_dates = prediction_dates[prediction_dates >= self.start_date]
+        if self.end_date:
+            prediction_dates = prediction_dates[prediction_dates <= self.end_date]
+        return prediction_dates
 
     def train_regressor(self, X_train, y_train):
         return self.predictor(X_train, y_train, **self.model_params).train()

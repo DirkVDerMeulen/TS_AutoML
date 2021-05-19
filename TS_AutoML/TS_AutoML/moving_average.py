@@ -8,6 +8,7 @@ from typing import (
     AnyStr
 )
 
+
 class MovingAverageForecast:
 
     def __init__(self, input_df,
@@ -36,7 +37,6 @@ class MovingAverageForecast:
         for SKUID, group in combinations:
             tmp_df = self.df[(self.df.SKUID == SKUID) & (self.df.ForecastGroupID == group)].copy()  # DF for combination
 
-            # TODO: adjust to match rolling prediction periods determination
             if self.start_date:
                 tmp_df = tmp_df[tmp_df[self.time_column] >= self.start_date - self.lag - self.window + 1]
             if self.end_date:
