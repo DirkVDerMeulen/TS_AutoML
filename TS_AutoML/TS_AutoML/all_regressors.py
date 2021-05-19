@@ -4,7 +4,7 @@ from sklearn.ensemble import RandomForestRegressor
 from TS_AutoML.functions import ParameterSearch
 
 from typing import (
-    AnyStr
+    Dict
 )
 
 # TODO add type hinting
@@ -14,17 +14,14 @@ class RandomForest:
     def __init__(self,
                  x_train: pd.DataFrame,
                  y_train: pd.Series,
-                 n_estimators: int = 100,
-                 max_depth: int = None,
-                 criterion: AnyStr = "mse",
-                 min_samples_split: int = 2
+                 **model_config: Dict
                  ):
         self.x = x_train
         self.y = y_train
-        self.n_estimators = n_estimators
-        self.max_depth = max_depth
-        self.criterion = criterion
-        self.min_samples_split = min_samples_split
+        self.n_estimators = model_config.get('n_estimators', 100)
+        self.max_depth = model_config.get('max_depth', None)
+        self.criterion = model_config.get('criterion', 'mse')
+        self.min_samples_split = model_config.get('min_samples_split', 2)
 
     def train(self):
         regr = RandomForestRegressor(n_estimators=self.n_estimators,
