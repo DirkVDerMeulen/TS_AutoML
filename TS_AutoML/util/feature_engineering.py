@@ -22,6 +22,7 @@ def get_unique_id(df: pd.DataFrame,
     return df
 
 
+# TODO: add sorting on date
 def get_lagged_features(df: pd.DataFrame,
                         *args,
                         partitioning_cols: List,
