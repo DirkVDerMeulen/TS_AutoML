@@ -1,12 +1,13 @@
 import pandas as pd
 
 from sklearn.ensemble import RandomForestRegressor
+from TS_AutoML.functions import ParameterSearch
 
 from typing import (
-    Dict
+    Dict,
+    AnyStr,
+    Tuple,
 )
-
-# TODO add type hinting
 
 
 class RandomForest:
@@ -28,3 +29,19 @@ class RandomForest:
                                      criterion=self.criterion,
                                      min_samples_split=self.min_samples_split)
         return regr.fit(self.x, self.y)
+
+    @staticmethod
+    def parameter_search(df: pd.DataFrame,
+                         grid: Dict,
+                         time_column: AnyStr,
+                         target_column: AnyStr,
+                         nr_folds: int,
+                         warmup_periods: int,
+                         prediction_lag: int) -> Tuple:
+
+        search = ParameterSearch(predictor=RandomForest, df=df, grid=grid, time_column=time_column,
+                                 target_column=target_column, nr_folds=nr_folds, warmup_periods=warmup_periods,
+                                 prediction_lag=prediction_lag)
+        best_fit, all_results = search.optimize_parameters()
+
+        return best_fit, all_results
