@@ -1,46 +1,125 @@
 import pandas as pd
+import numpy as np
+import itertools
 
-from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import mean_squared_error
 
 from typing import (
     Dict,
     Callable,
     AnyStr,
     Tuple,
-    Any
+    List
 )
 
 
 class ParameterSearch:
     def __init__(self,
+                 predictor: Callable,
                  df: pd.DataFrame,
+                 grid: Dict,
+                 time_column: AnyStr,
                  target_column: AnyStr,
-                 regressor: Callable,
-                 grid: Dict):
+                 nr_folds: int,
+                 warmup_periods: int,
+                 prediction_lag: int):
+        self.predictor = predictor
         self.df = df
-        self.target = target_column
-        self.regressor = regressor
         self.grid = grid
+        self.date = time_column
+        self.target = target_column
+        self.folds = nr_folds
+        self.start_periods = warmup_periods
+        self.lag = prediction_lag
 
-    def optimize(self) -> Tuple[Any, Any]:
-        X_train, y_train = self.x_y_split()
+    def optimize_parameters(self) -> Tuple:
+        """ Main method, perform k-fold validation looping over all parameter combination in the Grid """
+        all_names = sorted(self.grid)
+        combinations = list(itertools.product(*(self.grid[Name] for Name in all_names)))
 
-        regressor = self.regressor()
-        grid_search = GridSearchCV(estimator=regressor,
-                                   param_grid=self.grid,
-                                   cv=5,
-                                   n_jobs=-1,
-                                   verbose=2)
+        print(f'Training  {self.folds} folds for {len(combinations)} models.')
 
-        grid_search.fit(X_train, y_train)
+        results = {}
+        iteration = 1
+        for combination in combinations:
+            params = {key: combination[nr] for nr, key in enumerate(all_names)}
 
-        best_params = grid_search.best_params_
-        best_grid = grid_search.best_estimator_
+            print(f'Training model {iteration} of {len(combinations)} with parameters: {str(params)}')
+            iteration += 1
 
-        return best_params, best_grid
+            error = self._calculate_combination_error(params)
+            results[str(params)] = error
 
-    def x_y_split(self):
-        X_train = self.df.copy()
-        X_train.drop(self.target, axis=1, inplace=True)
-        y_train = self.df[self.target].copy()
-        return X_train, y_train
+        best_combination = min(results, key=results.get)
+
+        return best_combination, results
+
+    def _calculate_combination_error(self, parameters: Dict) -> float:
+        """ Method performs k-fold validation and error calculation for a single parameter combination """
+
+        # Get trian-test splits and initial training window
+        self._convert_date_to_int()
+        train_dates, train_test_sections = self._get_folds()
+
+        # Retrain the model looping over the folds to perform prediction task
+        results = []
+        for train_sec, test_sec in train_test_sections:
+            train_dates = list(set(train_dates + train_sec))
+
+            X_train, y_train, X_test, y_test = self._get_train_test_sets(train_dates=train_dates, test_dates=test_sec)
+
+            regressor = self.predictor(X_train, y_train, **parameters).train()
+            out = regressor.predict(X_test)
+
+            result = pd.DataFrame()
+            result['prediction'], result['actual'] = list(out), list(y_test)
+            results.append(result)
+
+        # Create single DF with results and calculate the error of these results
+        results = pd.concat(results)
+        error = self._rmse(results.actual, results.prediction)
+
+        return error
+
+    def _convert_date_to_int(self):
+        """ Method used to convert Timestamp time_column to integer type time column for easy handling of lag """
+        all_dates = sorted(list(self.df[self.date].unique()))
+        dates_dict = {all_dates[x]: x for x in range(len(all_dates))}
+        self.df[self.date] = self.df[self.date].apply(lambda x: dates_dict[x])
+
+    def _get_folds(self) -> Tuple:
+        """Method creates folds of (nearly) equal size for the k-fold validation"""
+        all_dates = sorted(list(self.df[self.date].unique()))
+
+        # create list with dates for warm-up period and remove from list of all_dates as they won't be used in val.
+        initial_train_dates = all_dates[:self.start_periods]
+        del all_dates[:self.start_periods]
+
+        test_dates = all_dates[self.lag:]  # Test period starts after warm-up + lag
+
+        # Loop over test dates to create folds of nearly equal size
+        train_test_sections = []
+        avg = len(test_dates) / float(self.folds)
+        last = 0.0
+        while last < len(test_dates):
+            test_section = test_dates[int(last): int(last + avg)]
+            train_section = [x - len(test_section) - self.lag for x in test_section]
+
+            train_test_sections.append((train_section, test_section))
+            last += len(test_section)
+
+        return initial_train_dates, train_test_sections
+
+    def _get_train_test_sets(self, train_dates: List, test_dates: List) -> Tuple:
+        """This method uses lists with train- and test dates to perform a train-, test split"""
+        train_data = self.df[self.df[self.date].isin(train_dates)].copy()
+        test_data = self.df[self.df[self.date].isin(test_dates)].copy()
+
+        X_train, X_test = train_data.copy(), test_data.copy()
+        X_train.drop(self.target, axis=1, inplace=True), X_test.drop(self.target, axis=1, inplace=True)
+        y_train, y_test = train_data[self.target], test_data[self.target]
+        return X_train, y_train, X_test, y_test
+
+    def _rmse(self, y_true: pd.Series, y_pred: pd.Series) -> float:
+        """This method calculates the root mean squared error"""
+        return np.sqrt(mean_squared_error(y_true, y_pred))

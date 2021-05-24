@@ -1,7 +1,6 @@
 import pandas as pd
 
 from sklearn.ensemble import RandomForestRegressor
-from TS_AutoML.functions import ParameterSearch
 
 from typing import (
     Dict
@@ -29,11 +28,3 @@ class RandomForest:
                                      criterion=self.criterion,
                                      min_samples_split=self.min_samples_split)
         return regr.fit(self.x, self.y)
-
-    @staticmethod
-    def search_params(df, target_column, grid):
-        gridsearch = ParameterSearch(df=df,
-                                     target_column=target_column,
-                                     regressor=RandomForestRegressor,
-                                     grid=grid)
-        return gridsearch.optimize()
