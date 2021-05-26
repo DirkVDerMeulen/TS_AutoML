@@ -67,6 +67,6 @@ class RandomForest:
                                                     retrain_frequency=retrain_frequency,
                                                     prediction_start_date=prediction_start_date,
                                                     prediction_end_date=prediction_end_date,
-                                                    **model_params)
+                                                    prediction_lag=prediction_lag, **model_params)
         prediction_results, accuracy = rolling_forward_predictor.predict()
         return prediction_results, accuracy

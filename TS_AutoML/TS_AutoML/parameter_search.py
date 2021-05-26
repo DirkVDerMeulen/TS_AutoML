@@ -1,8 +1,5 @@
 import pandas as pd
-import numpy as np
 import itertools
-
-from sklearn.metrics import mean_squared_error
 
 from typing import (
     Dict,
@@ -121,4 +118,4 @@ class ParameterSearch:
         return X_train, y_train, X_test, y_test
 
     def _mape(self, y_true, y_pred):
-        return max(0, ((1 - abs(y_pred-y_true)/y_true) * y_true))
+        return max(0, ((1 - abs(y_pred - y_true) / y_true) * y_true))

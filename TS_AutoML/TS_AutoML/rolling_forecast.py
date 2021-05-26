@@ -17,6 +17,7 @@ class RollingForecast:
                  retrain_frequency: int = 1,
                  prediction_start_date: int = 0,
                  prediction_end_date: int = 0,
+                 prediction_lag: int = 1,
                  **model_params):
         self.predictor = predictor
         self.all_data = df
@@ -26,6 +27,7 @@ class RollingForecast:
         self.end_date = prediction_end_date
         self.target_val = target_value
         self.frequency = retrain_frequency
+        self.lag = prediction_lag
         self.model_params = model_params
         self.results = []
         self.error = []
@@ -37,7 +39,7 @@ class RollingForecast:
 
             # Only update training data according to retrain frequency
             if iter % self.frequency == 0:
-                train = self.all_data[self.all_data[self.time_col] < date]
+                train = self.all_data[self.all_data[self.time_col] < date - self.lag + 1]
             test = self.all_data[self.all_data[self.time_col] == date]
 
             # Split data into train and test data
@@ -74,4 +76,4 @@ class RollingForecast:
         return self.predictor(X_train, y_train, **self.model_params).train()
 
     def _mape(self, y_true, y_pred):
-        return max(0, ((1 - abs(y_pred-y_true)/y_true) * y_true))
+        return max(0, ((1 - abs(y_pred - y_true) / y_true) * y_true))
