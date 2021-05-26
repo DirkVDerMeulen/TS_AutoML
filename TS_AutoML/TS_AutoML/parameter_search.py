@@ -74,7 +74,7 @@ class ParameterSearch:
 
         # Create single DF with results and calculate the error of these results
         results = pd.concat(results)
-        results['error_weight'] = results.apply(lambda x: self._mape(x.actual, x.prediction))
+        results['error_weight'] = results.apply(lambda x: self._mape(x.actual, x.prediction), axis=1)
         accuracy = sum(results.error_weight) / sum(results.actual)
         return accuracy
 

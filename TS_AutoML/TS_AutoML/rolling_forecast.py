@@ -53,7 +53,7 @@ class RollingForecast:
             # Add predictions and actuals to input Data
             X_test['prediction'], X_test['actual'] = list(out), list(y_test)
             X_test['prediction_error'] = X_test['prediction'] - X_test['actual']
-            X_test['error_weight'] = X_test.apply(lambda x: self._mape(x.actual, x.prediction))
+            X_test['error_weight'] = X_test.apply(lambda x: self._mape(x.actual, x.prediction), axis=1)
             self.results.append(X_test)
 
             accuracy = sum(X_test.error_weight) / sum(X_test.actual)
