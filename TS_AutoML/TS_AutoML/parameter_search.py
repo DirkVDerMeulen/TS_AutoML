@@ -50,7 +50,7 @@ class ParameterSearch:
             error = self._calculate_combination_error(params)
             results[str(params)] = error
 
-        best_combination = min(results, key=results.get)
+        best_combination = max(results, key=results.get)
 
         return best_combination, results
 
@@ -77,9 +77,9 @@ class ParameterSearch:
 
         # Create single DF with results and calculate the error of these results
         results = pd.concat(results)
-        error = self._rmse(results.actual, results.prediction)
-
-        return error
+        results['error_weight'] = results.apply(lambda x: self._mape(x.actual, x.prediction))
+        accuracy = sum(results.error_weight) / sum(results.actual)
+        return accuracy
 
     def _convert_date_to_int(self):
         """ Method used to convert Timestamp time_column to integer type time column for easy handling of lag """
@@ -120,6 +120,5 @@ class ParameterSearch:
         y_train, y_test = train_data[self.target], test_data[self.target]
         return X_train, y_train, X_test, y_test
 
-    def _rmse(self, y_true: pd.Series, y_pred: pd.Series) -> float:
-        """This method calculates the root mean squared error"""
-        return np.sqrt(mean_squared_error(y_true, y_pred))
+    def _mape(self, y_true, y_pred):
+        return max(0, ((1 - abs(y_pred-y_true)/y_true) * y_true))

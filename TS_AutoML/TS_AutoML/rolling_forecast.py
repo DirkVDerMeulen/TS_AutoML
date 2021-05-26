@@ -1,7 +1,4 @@
 import pandas as pd
-import numpy as np
-
-from sklearn.metrics import mean_squared_error
 
 from typing import (
     Callable,
@@ -54,14 +51,15 @@ class RollingForecast:
             # Add predictions and actuals to input Data
             X_test['prediction'], X_test['actual'] = list(out), list(y_test)
             X_test['prediction_error'] = X_test['prediction'] - X_test['actual']
+            X_test['error_weight'] = X_test.apply(lambda x: self._mape(x.actual, x.prediction))
             self.results.append(X_test)
 
-            error = self.rmse(y_test, out)
-            print('Week %d - Error %.5f' % (date, error))
+            accuracy = sum(X_test.error_weight) / sum(X_test.actual)
+            print('Week %d - Accuracy %.5f' % (date, accuracy))
 
         results = pd.concat(self.results)
-        error = self.rmse(results['actual'], results['prediction'])
-        return results, error
+        accuracy = sum(results.error_weight) / sum(results.actual)
+        return results, accuracy
 
     def get_prediction_dates(self):
         # Determine array of dates for which rolling forecast must be done
@@ -75,5 +73,5 @@ class RollingForecast:
     def train_regressor(self, X_train, y_train):
         return self.predictor(X_train, y_train, **self.model_params).train()
 
-    def rmse(self, y_true, y_pred):
-        return np.sqrt(mean_squared_error(y_true, y_pred))
+    def _mape(self, y_true, y_pred):
+        return max(0, ((1 - abs(y_pred-y_true)/y_true) * y_true))
