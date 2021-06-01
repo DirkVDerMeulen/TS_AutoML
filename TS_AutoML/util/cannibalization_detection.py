@@ -71,7 +71,7 @@ class CannibalizationDetector:
         no_promo_dates = list(promo_demand[promo_demand[self.promo_col] == 0]['Date'])
 
         if not promo_dates:
-            return 'no promo', 'no promo', 'no promo'
+            return 0, 0, 0
         else:
             onpromo = dependent_demand[(dependent_demand[self.date].isin(promo_dates)) &
                                        (dependent_demand[self.promo_col] == 0)][self.target_value]
