@@ -88,17 +88,21 @@ class LstmPredictor:
     def __init__(self,
                  **model_config: Dict
                  ):
+        self.input_units = model_config.get('input_units', 100)
         self.n_steps = model_config.get('n_steps')
         self.n_groups = model_config.get('n_groups')
         self.n_features = model_config.get('n_features')
+        self.activation = model_config.get('activation_function', 'relu')
         self.optimizer = model_config.get('optimizer', 'adam')
         self.loss = model_config.get('loss', 'mse')
         self.epochs = model_config.get('epochs', 10)
 
     def get_regressor(self):
         model = Sequential()
-        model.add(LSTM(312, activation='relu', input_shape=(self.n_steps * 6, self.n_features)))
-        model.add(Dense(6))
+        model.add(LSTM(units=self.input_units,
+                       activation=self.activation,
+                       input_shape=(self.n_steps * self.n_groups, self.n_features)))
+        model.add(Dense(self.n_groups))
         model.compile(optimizer=self.optimizer, loss=self.loss)
         return model
 
@@ -161,13 +165,15 @@ class LstmPredictor:
             prediction_start_date: int = 0,
             prediction_end_date: int = 0,
             prediction_lag: int = 1,
+            train_epochs: int = None,
+            train_steps: int = 10,
             **model_params) -> Tuple:
         rolling_forward_predictor = RollingForecast(predictor=LstmPredictor, df=df, groupby=groupby,
                                                     time_col=time_column, target_value=target_column,
                                                     retrain_frequency=retrain_frequency,
                                                     prediction_start_date=prediction_start_date,
                                                     prediction_end_date=prediction_end_date,
-                                                    train_steps=52, normalize_data=True,
-                                                    prediction_lag=prediction_lag, **model_params)
+                                                    train_steps=train_steps, train_epochs=train_epochs,
+                                                    normalize_data=True, prediction_lag=prediction_lag, **model_params)
         prediction_results, accuracy = rolling_forward_predictor.predict()
         return prediction_results, accuracy

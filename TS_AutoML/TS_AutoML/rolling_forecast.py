@@ -18,6 +18,7 @@ class RollingForecast:
                  prediction_start_date: int = 0,
                  prediction_end_date: int = 0,
                  prediction_lag: int = 1,
+                 train_epochs: int = None,
                  normalize_data: bool = False,
                  train_steps: int = 0,
                  **model_params):
@@ -30,6 +31,7 @@ class RollingForecast:
         self.target_val = target_value
         self.frequency = retrain_frequency
         self.lag = prediction_lag
+        self.epochs = train_epochs
         self.normalize_data = normalize_data
         self.train_steps = train_steps
         self.model_params = model_params
@@ -74,11 +76,15 @@ class RollingForecast:
 
             # Train regressor and predict output
             regressor = self.create_regressor()
-            regressor.fit(X_train, y_train)
+            if self.epochs:
+                regressor.fit(X_train, y_train, epochs=self.epochs)
+            else:
+                regressor.fit(X_train, y_train)
             out = regressor.predict(X_test)
 
             # Add prediction to test_data and denormalize if necessary
             test_data['prediction'] = out.tolist()[0]
+            test_data['prediction'] = test_data.prediction.clip(0, None)
             if self.normalize_data:
                 maximum = normalization_values[self.target_val]['max']
                 test_data['prediction'] = test_data['prediction'] * (
