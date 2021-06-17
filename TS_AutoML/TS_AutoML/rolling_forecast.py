@@ -42,8 +42,8 @@ class RollingForecast:
         for iter, date in enumerate(self.get_prediction_dates()):
 
             # Get DF with data available for prediction and test data
-            iteration_data = self.all_data[self.all_data[self.time_col] <= date]
-            test_data = self.all_data[self.all_data[self.time_col] == date]
+            iteration_data = self.all_data[self.all_data[self.time_col] <= date].copy()
+            test_data = self.all_data[self.all_data[self.time_col] == date].copy()
 
             # Normalize data based on method used
             if self.normalize_data:
@@ -70,34 +70,35 @@ class RollingForecast:
             if iter % self.frequency == 0:
                 X_train, y_train = train_test_splits[0], train_test_splits[1]
             X_test, y_test = train_test_splits[2], train_test_splits[3]
+            X_test = self.predictor.reshape_test_data(X_test)
 
             # Train regressor and predict output
             regressor = self.create_regressor()
-
-            # TODO: solve error occuring here
             regressor.fit(X_train, y_train)
             out = regressor.predict(X_test)
 
             # Add prediction to test_data and denormalize if necessary
             test_data['prediction'] = out.tolist()[0]
             if self.normalize_data:
+                maximum = normalization_values[self.target_val]['max']
                 test_data['prediction'] = test_data['prediction'] * (
                         normalization_values[self.target_val]['max'] - normalization_values[self.target_val]['min']
                 ) + normalization_values[self.target_val]['min']
 
             # Calculate prediction error and error weight
-            X_test['prediction_error'] = X_test['prediction'] - X_test[self.target_val]
-            X_test['error_weight'] = X_test.apply(lambda x: self._mape(x[self.target_val], x.prediction), axis=1)
+            test_data['prediction_error'] = test_data['prediction'] - test_data[self.target_val]
+            test_data['error_weight'] = test_data.apply(lambda x: self._mape(x[self.target_val], x.prediction), axis=1)
 
             # Add to all results
-            self.results.append(X_test)
+            self.results.append(test_data)
 
             # Calculate and print iteration accuracy
-            accuracy = sum(X_test.error_weight) / sum(X_test.actual)
+            accuracy = sum(test_data.error_weight) / sum(test_data[self.target_val])
             print('Week %d - Accuracy %.5f' % (date, accuracy))
 
+        # Create single DF for all results and calculate accuracy
         results = pd.concat(self.results)
-        accuracy = sum(results.error_weight) / sum(results.actual)
+        accuracy = sum(results.error_weight) / sum(results[self.target_val])
         return results, accuracy
 
     def get_prediction_dates(self):
