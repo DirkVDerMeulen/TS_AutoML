@@ -19,24 +19,26 @@ from typing import (
     List,
 )
 
+
 class LstmPredictor:
     def __init__(self,
+                 input_shape: Tuple,
+                 output_shape: int,
                  **model_config: Dict
                  ):
-        self.input_units = model_config.get('input_units', 100)
-        self.n_steps = model_config.get('n_steps')
-        self.n_groups = model_config.get('n_groups')
-        self.n_features = model_config.get('n_features')
+        self.input_shape = input_shape
+        self.output_shape = output_shape
+        self.L1_units = model_config.get('l1_units', 100)
         self.activation = model_config.get('activation_function', 'relu')
         self.optimizer = model_config.get('optimizer', 'adam')
         self.loss = model_config.get('loss', 'mse')
 
     def get_regressor(self):
         model = Sequential()
-        model.add(LSTM(units=self.input_units,
+        model.add(LSTM(units=self.L1_units,
                        activation=self.activation,
-                       input_shape=(self.n_steps * self.n_groups, self.n_features)))
-        model.add(Dense(self.n_groups))
+                       input_shape=self.input_shape))
+        model.add(Dense(self.output_shape))
         model.compile(optimizer=self.optimizer, loss=self.loss)
         return model
 
@@ -99,10 +101,13 @@ class LstmPredictor:
             prediction_start_date: int = 0,
             prediction_end_date: int = 0,
             prediction_lag: int = 1,
-            train_epochs: int = None,
-            train_batch_size: int = 1,
-            train_steps: int = 10,
             **model_params) -> Tuple:
+
+        # Get part of model configuration
+        train_steps = model_params['train_steps']
+        train_batch_size = model_params['train_batch_size']
+        train_epochs = model_params['train_epochs']
+
         rolling_forward_predictor = RollingForecast(predictor=LstmPredictor, df=df, groupby=groupby,
                                                     time_col=time_column, target_value=target_column,
                                                     retrain_frequency=retrain_frequency,

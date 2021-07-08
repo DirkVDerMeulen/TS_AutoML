@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 from typing import (
     Callable,
@@ -77,7 +78,7 @@ class RollingForecast:
             X_test = self.predictor.reshape_test_data(X_test)
 
             # Train regressor and predict output
-            regressor = self.create_regressor()
+            regressor = self.create_regressor(X_train, y_train)
             if self.epochs:
                 regressor.fit(X_train, y_train, epochs=self.epochs, batch_size=self.batch_size)
             else:
@@ -89,7 +90,6 @@ class RollingForecast:
             test_data['prediction'] = out.tolist()
             test_data['prediction'] = test_data.prediction.clip(0, None)
             if self.normalize_data:
-                maximum = normalization_values[self.target_val]['max']
                 test_data['prediction'] = test_data['prediction'] * (
                         normalization_values[self.target_val]['max'] - normalization_values[self.target_val]['min']
                 ) + normalization_values[self.target_val]['min']
@@ -119,8 +119,13 @@ class RollingForecast:
             prediction_dates = prediction_dates[prediction_dates <= self.end_date]
         return prediction_dates
 
-    def create_regressor(self):
-        return self.predictor(**self.model_params).get_regressor()
+    def create_regressor(self, X, y):
+        if not isinstance(X, pd.DataFrame):
+            input_shape = X[0].shape
+            output_shape = len(y[0])
+            return self.predictor(input_shape, output_shape, **self.model_params).get_regressor()
+        else:
+            return self.predictor(**self.model_params).get_regressor()
 
     def _mape(self, y_true, y_pred):
         return max(0, ((1 - abs(y_pred - y_true) / y_true) * y_true))
